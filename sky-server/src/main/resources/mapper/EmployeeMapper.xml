@@ -28,4 +28,5 @@
         </set>
         where id = #{id}
     </update>
+    <update id="updateById"></update>
 </mapper>
