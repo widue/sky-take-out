@@ -14,4 +14,47 @@
                 #{rejectionReason}, #{cancelTime}, #{estimatedDeliveryTime}, #{deliveryStatus}, #{deliveryTime},
                 #{packAmount}, #{tablewareNumber}, #{tablewareStatus})
     </insert>
+
+    <select id="pageQuery" resultType="com.sky.entity.Orders">
+        select * from orders
+        <where>
+        <if test="number != null and number!=''">
+            and number like concat('%',#{number},'%')
+        </if>
+        <if test="phone != null and phone!=''">
+            and phone like concat('%',#{phone},'%')
+        </if>
+        <if test="userId != null">
+            and user_id = #{userId}
+        </if>
+        <if test="status != null">
+            and status = #{status}
+        </if>
+        <if test="beginTime != null">
+            and order_time &gt;= #{beginTime}
+        </if>
+        <if test="endTime != null">
+            and order_time &lt;= #{endTime}
+        </if>
+        </where>
+        order by order_time desc
+
+    </select>
+
+
+    <update id="update" parameterType="com.sky.entity.Orders">
+            update orders
+            <set>
+                <!-- 动态更新需要修改的字段，只更新非空的属性 -->
+                <if test="status != null">status = #{status},</if>
+                <if test="cancelReason != null">cancel_reason = #{cancelReason},</if>
+                <if test="cancelTime != null">cancel_time = #{cancelTime},</if>
+                <!-- 可根据需要添加其他可能更新的字段，如支付状态、配送状态等 -->
+            </set>
+            <!-- 必须根据订单ID定位要更新的订单，避免批量更新 -->
+            where id = #{id}
+        </update>
+
+
+
 </mapper>
