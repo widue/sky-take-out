@@ -117,6 +117,12 @@ public class DishController {
 
     }
 
+    /**
+     * 菜品起售,停售
+     * @param status
+     * @param id
+     * @return
+     */
     @PostMapping("/status/{status}")
     @ApiOperation("菜品起售,停售")
     public Result  startOrStop (@PathVariable Integer status,Long id){
@@ -127,6 +133,10 @@ public class DishController {
         return Result.success();
 
     }
+    /**
+     * 清理缓存
+     * @param pattern
+     */
     private void cleanCache(String pattern){
         Set keys = redisTemplate.keys(pattern);
         redisTemplate.delete(keys);

@@ -67,6 +67,11 @@ public class OrdersController {
         ordersService.cancelById(id);
         return Result.success();
     }
+    /**
+     * 再来一单
+     * @param id
+     * @return
+     */
 
     @PostMapping("/repetition/{id}")
     @ApiOperation("再来一单")
@@ -89,6 +94,11 @@ public class OrdersController {
         log.info("生成预支付交易单：{}", orderPaymentVO);
         return Result.success(orderPaymentVO);
     }
+    /**
+     * 客户催单
+     * @param id
+     * @return
+     */
     @GetMapping("/reminder/{id}")
     @ApiOperation("客户催单")
     public Result reminder(@PathVariable("id") Long id) {
