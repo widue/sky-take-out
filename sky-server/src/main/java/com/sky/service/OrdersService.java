@@ -61,10 +61,10 @@ public interface OrdersService {
 
     /**
      * 接单
-     * @param id
+     * @param ordersConfirmDTO
      */
-    void confirmById(Long id);
 
+    void confirm(OrdersConfirmDTO ordersConfirmDTO);
     /**
      * 拒单
      * @param ordersRejectionDTO
@@ -107,4 +107,5 @@ public interface OrdersService {
      * @param id
      */
     void reminder(Long id);
+
 }

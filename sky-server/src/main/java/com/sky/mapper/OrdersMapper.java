@@ -9,6 +9,7 @@ import org.apache.ibatis.annotations.Update;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface OrdersMapper {
@@ -64,8 +65,21 @@ public interface OrdersMapper {
     @Select("select * from orders where number = #{orderNumber}")
     Orders getByNumber(String orderNumber);
 
+    /**
+     * 更新订单状态
+     * @param orderStatus
+     * @param orderPaidStatus
+     * @param checkOutTime
+     * @param orderNumber
+     */
     @Update("update orders set status = #{orderStatus},pay_status = #{orderPaidStatus} ,checkout_time = #{checkOutTime} " +
             "where number = #{orderNumber}")
-
     void updateStatus(Integer orderStatus, Integer orderPaidStatus, LocalDateTime checkOutTime, String orderNumber);
+
+    /**
+     * 根据map集合中的动态条件，统计营业额数据
+     * @param map
+     * @return
+     */
+    Double sumByMap(Map map);
 }

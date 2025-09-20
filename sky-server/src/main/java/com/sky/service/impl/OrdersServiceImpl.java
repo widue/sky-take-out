@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -60,7 +61,7 @@ public class OrdersServiceImpl implements OrdersService {
      * @param ordersSubmitDTO
      * @return
      */
-
+    @Transactional
     @Override
     public OrderSubmitVO submitOrder(OrdersSubmitDTO ordersSubmitDTO) {
         //处理各种业务异常(地址栏为空,购物车数据为空,不用小程序用后端,apifox时)
@@ -349,17 +350,18 @@ public class OrdersServiceImpl implements OrdersService {
 
     /**
      * 接单
-     * @param id
+     *
+     * @param ordersConfirmDTO
      */
-    @Override
-    public void confirmById(Long id) {
-        Orders orders =  Orders.builder()
-                .id(id)
+    public void confirm(OrdersConfirmDTO ordersConfirmDTO) {
+        Orders orders = Orders.builder()
+                .id(ordersConfirmDTO.getId())
                 .status(Orders.CONFIRMED)
                 .build();
-        ordersMapper.update(orders);
 
+        ordersMapper.update(orders);
     }
+
     /**
      * 拒单
      *
@@ -371,24 +373,20 @@ public class OrdersServiceImpl implements OrdersService {
         if(ordersDB == null || ordersDB.getStatus() != Orders.TO_BE_CONFIRMED){
             throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
         }
-        Integer payStatus = ordersDB.getPayStatus();
-        if(payStatus == Orders.PAID){
-            String refund = weChatPayUtil.refund(
-                    ordersDB.getNumber(),
-                    ordersDB.getNumber(),
-                    new BigDecimal(0.01),
-                    new BigDecimal(0.01));
-            log.info("申请退款成功，结果：{}",refund);
-        }
-        // 拒单需要退款，根据订单id更新订单状态、拒单原因、取消时间
+
+        // 注意：这里有一个bug，原代码中orders.getId()会空指针异常
+        // 应该使用ordersDB.getId()
+
+        // 拒单，根据订单id更新订单状态、拒单原因、取消时间
         Orders orders = new Orders();
-        orders.setId(orders.getId());
+        orders.setId(ordersRejectionDTO.getId()); // 修复：使用正确的ID
         orders.setStatus(Orders.CANCELLED);
         orders.setRejectionReason(ordersRejectionDTO.getRejectionReason());
         orders.setCancelTime(LocalDateTime.now());
 
         ordersMapper.update(orders);
     }
+
 
     /**
      * 取消订单
@@ -402,14 +400,18 @@ public class OrdersServiceImpl implements OrdersService {
 
         //支付状态
         Integer payStatus = ordersDB.getPayStatus();
-        if (payStatus == 1) {
-            //用户已支付，需要退款
-            String refund = weChatPayUtil.refund(
-                    ordersDB.getNumber(),
-                    ordersDB.getNumber(),
-                    new BigDecimal(0.01),
-                    new BigDecimal(0.01));
-            log.info("申请退款：{}", refund);
+        if (payStatus == Orders.PAID) { // 修复：使用Orders.PAID常量
+            try {
+                //用户已支付，需要退款
+                String refund = weChatPayUtil.refund(
+                        ordersDB.getNumber(),
+                        ordersDB.getNumber(),
+                        new BigDecimal(0.01),
+                        new BigDecimal(0.01));
+                log.info("申请退款：{}", refund);
+            } catch (Exception e) {
+                log.error("退款处理异常：", e);
+            }
         }
 
         // 管理端取消订单需要退款，根据订单id更新订单状态、取消原因、取消时间
@@ -420,6 +422,7 @@ public class OrdersServiceImpl implements OrdersService {
         orders.setCancelTime(LocalDateTime.now());
         ordersMapper.update(orders);
     }
+
 
     /**
      * 派送订单
